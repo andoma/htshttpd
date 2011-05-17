@@ -153,7 +153,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 		 int64_t contentlen,
 		 const char *encoding, const char *location, 
 		 int maxage, const char *range,
-		 const char *disposition)
+		 const char *disposition, const char *transfer_encoding)
 {
   struct tm tm0, *tm;
   htsbuf_queue_t hdrs;
@@ -205,6 +205,9 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
   if(encoding != NULL)
     htsbuf_qprintf(&hdrs, "Content-Encoding: %s\r\n", encoding);
 
+  if(transfer_encoding != NULL)
+    htsbuf_qprintf(&hdrs, "Transfer-Encoding: %s\r\n", transfer_encoding);
+
   if(location != NULL)
     htsbuf_qprintf(&hdrs, "Location: %s\r\n", location);
 
@@ -238,7 +241,7 @@ http_send_reply(http_connection_t *hc, int rc, const char *content,
 		const char *encoding, const char *location, int maxage)
 {
   http_send_header(hc, rc, content, hc->hc_reply.hq_size,
-		   encoding, location, maxage, 0, NULL);
+		   encoding, location, maxage, 0, NULL, NULL);
   
   if(hc->hc_no_output)
     return;

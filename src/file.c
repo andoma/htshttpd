@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -26,6 +27,7 @@ send_file(http_connection_t *hc, const char *remain, void *opaque)
   off_t content_len, file_start, file_end, chunk;
   ssize_t r;
   char filename[512];
+  char tmp[64];
 
   printf("%s\n", remain);
 
@@ -75,17 +77,42 @@ send_file(http_connection_t *hc, const char *remain, void *opaque)
   
   http_send_header(hc, range ? HTTP_STATUS_PARTIAL_CONTENT : HTTP_STATUS_OK,
 		   content,
-		   hf_mode ==  HF_MODE_PIPE ? 0 : content_len,
+		   hf_mode >= HF_MODE_KNOW_LENGTH ? content_len : 0,
 		   NULL, NULL, 10, 
-		   range ? range_buf : NULL, NULL);
+		   range ? range_buf : NULL, NULL,
+		   hf_mode == HF_MODE_CHUNKED ? "chunked" : NULL);
 
   if(!hc->hc_no_output) {
     while(content_len > 0) {
-      chunk = MIN(1024 * 1024 * 1024, content_len);
+
+      if(hf_mode == HF_MODE_CHUNKED) {
+	chunk = MIN(9999, content_len);
+	snprintf(tmp, sizeof(tmp), "%lx\r\n", chunk);
+	r = write(hc->hc_fd, tmp, strlen(tmp));
+	if(r == -1)
+	  return -1;
+
+      } else {
+	chunk = MIN(1024 * 1024 * 1024, content_len);
+      }
+
       r = sendfile(hc->hc_fd, fd, NULL, chunk);
       if(r == -1)
 	return -1;
       content_len -= r;
+
+      if(hf_mode == HF_MODE_CHUNKED) {
+	snprintf(tmp, sizeof(tmp), "\r\n");
+	r = write(hc->hc_fd, tmp, strlen(tmp));
+	if(r == -1)
+	  return -1;
+      }
+    }
+    if(hf_mode == HF_MODE_CHUNKED) {
+      snprintf(tmp, sizeof(tmp), "0\r\n\r\n");
+      r = write(hc->hc_fd, tmp, strlen(tmp));
+      if(r == -1)
+	return -1;
     }
   }
   close(fd);

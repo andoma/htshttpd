@@ -38,6 +38,8 @@ main(int argc, char **argv)
     case 'm':
       if(!strcmp(optarg, "pipe"))
 	mode = HF_MODE_PIPE;
+      else if(!strcmp(optarg, "chunked"))
+	mode = HF_MODE_CHUNKED;
       else if(!strcmp(optarg, "knowlength"))
 	mode = HF_MODE_KNOW_LENGTH;
       else if(!strcmp(optarg, "seekstart"))

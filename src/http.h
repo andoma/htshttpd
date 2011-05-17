@@ -114,7 +114,7 @@ void http_redirect(http_connection_t *hc, const char *location);
 void http_send_header(http_connection_t *hc, int rc, const char *content, 
 		      int64_t contentlen, const char *encoding,
 		      const char *location, int maxage, const char *range,
-		      const char *disposition);
+		      const char *disposition, const char *transfer_encoding);
 
 typedef int (http_callback_t)(http_connection_t *hc, 
 			      const char *remain, void *opaque);
