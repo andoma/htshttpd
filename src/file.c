@@ -87,7 +87,7 @@ send_file(http_connection_t *hc, const char *remain, void *opaque)
 
       if(hf_mode == HF_MODE_CHUNKED) {
 	chunk = MIN(9999, content_len);
-	snprintf(tmp, sizeof(tmp), "%lx\r\n", chunk);
+	snprintf(tmp, sizeof(tmp), "%"PRId64"\r\n", chunk);
 	r = write(hc->hc_fd, tmp, strlen(tmp));
 	if(r == -1)
 	  return -1;
